@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"uros-restron/rosix/ai"
-	"uros-restron/rosix/core"
+	"github.com/uos-projects/uos-rosix/ai"
+	"github.com/uos-projects/uos-rosix/core"
 )
 
 // 演示ROSIX的基本使用

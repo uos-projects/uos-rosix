@@ -3,7 +3,7 @@ package resource
 import (
 	"fmt"
 	"sync"
-	"uros-restron/rosix/core"
+	"github.com/uos-projects/uos-rosix/core"
 )
 
 // Registry 资源注册表实现

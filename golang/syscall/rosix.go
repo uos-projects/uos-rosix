@@ -7,8 +7,8 @@ import (
 	"time"
 	"uros-restron/internal/actor"
 	"uros-restron/internal/models"
-	"uros-restron/rosix/core"
-	"uros-restron/rosix/resource"
+	"github.com/uos-projects/uos-rosix/core"
+	"github.com/uos-projects/uos-rosix/resource"
 )
 
 // System ROSIX系统调用实现

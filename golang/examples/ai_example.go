@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
-	"uros-restron/rosix/ai"
-	"uros-restron/rosix/core"
+	"github.com/uos-projects/uos-rosix/ai"
+	"github.com/uos-projects/uos-rosix/core"
 )
 
 // AI驱动的资源管理示例

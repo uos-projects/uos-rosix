@@ -2,8 +2,8 @@ package api
 
 import (
 	"net/http"
-	"uros-restron/rosix/ai"
-	"uros-restron/rosix/core"
+	"github.com/uos-projects/uos-rosix/ai"
+	"github.com/uos-projects/uos-rosix/core"
 
 	"github.com/gin-gonic/gin"
 )

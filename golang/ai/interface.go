@@ -1,7 +1,7 @@
 package ai
 
 import (
-	"uros-restron/rosix/core"
+	"github.com/uos-projects/uos-rosix/core"
 )
 
 // AIOrchestrator AI编排器接口

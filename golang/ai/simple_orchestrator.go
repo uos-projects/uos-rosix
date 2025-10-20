@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"uros-restron/rosix/core"
+	"github.com/uos-projects/uos-rosix/core"
 )
 
 // SimpleOrchestrator 简单的AI编排器实现（演示用）

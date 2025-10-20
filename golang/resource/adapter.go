@@ -3,7 +3,7 @@ package resource
 import (
 	"fmt"
 	"uros-restron/internal/models"
-	"uros-restron/rosix/core"
+	"github.com/uos-projects/uos-rosix/core"
 )
 
 // ThingAdapter 将内部Thing模型适配为ROSIX Resource接口
