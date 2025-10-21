@@ -258,3 +258,4 @@ void rosix_free_resource_ref(ResourceRef* ref);
 #endif
 
 #endif /* _ROSIX_RESOURCE_H */
+

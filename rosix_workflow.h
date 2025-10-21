@@ -382,3 +382,4 @@ void rosix_workflow_free_result(ROSIX_WorkflowResult* result);
 #endif
 
 #endif /* _ROSIX_WORKFLOW_H */
+

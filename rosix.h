@@ -230,3 +230,4 @@ int rosix_is_valid_handle(ResourceHandle handle);
 #endif
 
 #endif /* _ROSIX_H */
+

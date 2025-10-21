@@ -273,3 +273,4 @@ ROSIX_Result rosix_stream_recover(const char* persistence_path,
 #endif
 
 #endif /* _ROSIX_STREAM_H */
+

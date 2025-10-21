@@ -312,3 +312,4 @@ void rosix_rule_free(ROSIX_RuleSet* rule_set);
 #endif
 
 #endif /* _ROSIX_RULE_H */
+

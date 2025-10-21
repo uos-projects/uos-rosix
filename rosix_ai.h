@@ -374,3 +374,4 @@ void rosix_agent_free_plan(ROSIX_AgentPlan* plan);
 #endif
 
 #endif /* _ROSIX_AI_H */
+
