@@ -1,676 +1,257 @@
-# ROSIX - Resource Operating System Interface eXtension
+# ROSIX 白皮书 v1.0（标准草案）
 
-> **"一切皆文件"** 之于操作系统，**"一切皆资源"** 之于资源管理系统
+## 1. 概述
 
-ROSIX是一个面向资源的编程层，它将POSIX的设计哲学应用到资源管理领域，为数字孪生平台提供统一、标准、易用的编程接口。
+ROSIX（Resource-Oriented System Interface for X）是面向**人、机、物一体化操作系统（UOS）**的核心标准接口。
+其目标是为物理资源（设备、服务、人力、信息等）提供在信息空间中的统一抽象、协同机制与智能演化能力。
+
+ROSIX 以 **资源为中心（Resource-Centric）**，以 **Actor 模型** 为软件实体基础，
+面向多维空间（语义、时间、空间、拓扑）建立统一的数字孪生语义空间（Resource Space），
+并在此基础上提供命令式（Core）、流式（Stream）、规则式（Rule）、编排式（Workflow）与智能驱动（AI）等多种编程范式。
 
 ---
 
-## 📚 POSIX的核心理念与ROSIX的设计对照
+## 2. 设计理念
 
-### POSIX的伟大思想
+ROSIX 的设计核心在于 **以资源为统一抽象**，实现“可编程的现实世界”：
 
-POSIX最伟大的设计是**"一切皆文件"（Everything is a File）**：
+* **统一抽象**：所有资源（传感器、执行器、服务、人）均具备唯一标识、属性集、行为集。
+* **信息孪生**：物理资源在信息空间中形成对应的 Actor 实体，可交互、可计算、可协同。
+* **时空融合**：每个资源在语义、时间、空间、拓扑四个维度被建模与追踪。
+* **多范式协同**：支持命令式、流式、规则式与编排式多层编程模型。
+* **AI 原生**：提供智能体参与的协同接口，实现人机共生的应用开发方式。
+
+---
+
+## 3. 总体架构
+
+ROSIX 架构自下而上分为五个逻辑层次：
+
+| 层级 | 名称                           | 职责                               |
+| -- | ---------------------------- | -------------------------------- |
+| L0 | **Physical Resource Layer**  | 物理世界中的传感器、设备、服务、人                |
+| L1 | **ROSIX.Core**               | 资源访问与控制的基础接口（类似 POSIX）           |
+| L2 | **ROSIX.ResourceSpace**      | 资源语义、时空、拓扑模型的统一抽象                |
+| L3 | **ROSIX.Programming Models** | Stream / Rule / Workflow 等高层编程模型 |
+| L4 | **ROSIX.AI**                 | 智能体接口与意图驱动型编程模型                  |
+
+```
+物理资源 ──> ROSIX.Core ──> Resource Space ──> {Stream, Rule, Workflow, AI}
+```
+
+---
+
+## 4. ROSIX.Core
+
+ROSIX.Core 是整个系统的基础接口层，对应 POSIX 在人机物融合领域的角色。
+它定义了资源的创建、访问、监听、控制与释放等操作。
+
+### 4.1 数据类型
 
 ```c
-// 无论是什么，都用相同的接口操作
-int fd = open("/dev/sda", O_RDWR);      // 硬盘设备
-int fd = open("/proc/123/status", O_RDONLY);  // 进程信息
-int fd = open("data.txt", O_RDWR);      // 普通文件
+typedef int ROSIX_Result;
+typedef int ResourceHandle;
+typedef struct {
+    char* uri;
+    char* type;
+    char* name;
+    char* metadata;
+} ResourceDescriptor;
 
-// 统一的操作接口
-read(fd, buffer, size);
-write(fd, data, size);
-ioctl(fd, cmd, arg);
-close(fd);
+typedef void (*ROSIX_Callback)(ResourceHandle handle, const char* event, void* userdata);
 ```
 
-**核心价值：**
-- ✅ 统一的抽象 - 屏蔽底层差异
-- ✅ 简单的原语 - open/close/read/write/ioctl
-- ✅ 层次化命名 - 路径即身份
-- ✅ 资源管理 - 文件描述符机制
-
-### ROSIX的设计对照
-
-ROSIX将这一理念扩展到资源管理：**"一切皆资源"（Everything is a Resource）**
-
-```go
-// Go版本
-rd := rosix.Open("/actors/purifier_001", ModeInvoke, ctx)
-value := rosix.Read(rd, "temperature")
-rosix.Invoke(rd, "purify_air", params)
-rosix.Close(rd)
-```
-
-```java
-// Java版本
-ResourceDescriptor rd = rosix.open(
-    ResourcePath.of("/actors/purifier_001"), 
-    OpenMode.INVOKE, ctx);
-Object value = rosix.read(rd, "temperature");
-rosix.invoke(rd, "purify_air", params);
-rosix.close(rd);
-```
-
----
-
-## 🔄 核心概念映射
-
-| POSIX概念 | ROSIX对应 | 说明 |
-|-----------|-----------|------|
-| **File** | **Resource** | 文件 → 资源 |
-| **File Descriptor (fd)** | **ResourceDescriptor (RD)** | 整数句柄 |
-| **File Path** | **ResourcePath** | 层次化路径 |
-| **open()** | **Open()** | 打开/获取访问权 |
-| **close()** | **Close()** | 关闭/释放资源 |
-| **read()** | **Read()** | 读取数据/属性 |
-| **write()** | **Write()** | 写入数据/属性 |
-| **ioctl()** | **Invoke()** | 设备控制/行为调用 |
-| **stat()** | **Stat()** | 获取文件信息/资源信息 |
-| **readdir()** | **List()** | 列出目录/列出子资源 |
-| **inotify** | **Watch()** | 文件监听/资源监听 |
-| **O_RDONLY/O_WRONLY** | **ModeRead/ModeWrite** | 打开模式（位标志） |
-| **errno** | **ErrorCode** | 错误码 |
-
----
-
-## 🎯 资源模型
-
-### ROSIX扩展了POSIX的文件概念
-
-```
-资源 (Resource)
-  ├── 静态属性 (Attributes)
-  │   └── 固有特性：ID、Name、Type、Metadata
-  │       类似：文件的inode信息
-  │
-  ├── 动态特征 (Features)  
-  │   └── 运行时状态：温度、速度、状态
-  │       类似：文件的实时内容
-  │
-  └── 行为 (Behaviors)
-      └── 可执行操作：函数、命令
-          创新：POSIX用ioctl，ROSIX用命名行为
-```
-
-### 资源类型
-
-```go
-const (
-    TypeDevice   ResourceType = "device"   // 设备（传感器、执行器）
-    TypeObject   ResourceType = "object"   // 对象（容器、物品）
-    TypePerson   ResourceType = "person"   // 人员
-    TypeService  ResourceType = "service"  // 服务
-    TypeActor    ResourceType = "actor"    // Actor（行为实例）
-)
-```
-
----
-
-## 🏗️ 项目结构
-
-```
-rosix/
-├── golang/                    # Go语言实现
-│   ├── core/                 # 核心接口和类型 (~350行)
-│   │   ├── types.go         # 数据类型定义
-│   │   └── interface.go     # 接口定义
-│   ├── resource/             # 资源层 (~400行)
-│   │   ├── adapter.go       # Thing/Actor适配器
-│   │   └── registry.go      # 资源注册表
-│   ├── syscall/              # 系统调用实现 (~400行)
-│   │   └── rosix.go         # Open/Close/Read/Write/Invoke
-│   ├── ai/                   # AI协同层 (~550行)
-│   │   ├── interface.go     # AI接口定义
-│   │   └── simple_orchestrator.go
-│   ├── api/                  # HTTP API (~330行)
-│   │   ├── handlers.go      # 请求处理
-│   │   └── routes.go        # 路由定义
-│   └── examples/             # 示例代码 (~500行)
-│
-├── java/                      # Java语言实现
-│   ├── pom.xml               # Maven配置
-│   ├── src/main/java/com/uros/rosix/
-│   │   ├── core/             # 核心类（15个）
-│   │   ├── syscall/          # 系统调用实现
-│   │   ├── ai/               # AI接口
-│   │   └── example/          # 示例程序
-│   └── README.md
-│
-├── README.md                  # 本文档
-├── ARCHITECTURE.md            # 详细架构设计
-├── INTEGRATION.md             # 集成指南
-├── QUICKSTART.md              # 快速开始
-├── SUMMARY.md                 # 项目总结
-└── LANGUAGE_COMPARISON.md     # 语言对比
-
-cmd/rosix-cli/                 # CLI工具
-└── main.go                    # 命令行客户端
-```
-
----
-
-## 🔑 核心系统调用
-
-### 1. 资源操作原语
-
-| 系统调用 | POSIX对应 | 功能 | Go签名 | Java签名 |
-|---------|-----------|------|--------|---------|
-| **Open** | `open()` | 打开资源 | `Open(path, mode, ctx) (RD, error)` | `open(path, mode, ctx) throws` |
-| **Close** | `close()` | 关闭资源 | `Close(rd) error` | `close(rd) throws` |
-| **Read** | `read()` | 读取属性 | `Read(rd, key) (value, error)` | `read(rd, key) throws` |
-| **Write** | `write()` | 写入属性 | `Write(rd, key, value) error` | `write(rd, key, value) throws` |
-| **Invoke** | `ioctl()` | 调用行为 | `Invoke(rd, behavior, params) (result, error)` | `invoke(rd, behavior, params) throws` |
-
-### 2. 资源发现
-
-| 系统调用 | POSIX对应 | 功能 |
-|---------|-----------|------|
-| **Find** | `find` | 查找资源 |
-| **List** | `readdir()` | 列出子资源 |
-| **Stat** | `stat()` | 获取资源信息 |
-
-### 3. 资源监听
-
-| 系统调用 | POSIX对应 | 功能 |
-|---------|-----------|------|
-| **Watch** | `inotify` | 监听变化 |
-| **Unwatch** | - | 取消监听 |
-
-### 4. 资源协同（ROSIX创新）
-
-| 系统调用 | 功能 |
-|---------|------|
-| **Link** | 建立资源关系 |
-| **Unlink** | 解除资源关系 |
-| **Pipe** | 创建资源数据管道 |
-| **Fork** | 复制/创建资源实例 |
-
-### 5. AI驱动（ROSIX创新）
-
-| 接口 | 功能 |
-|------|------|
-| **AIInvoke** | 自然语言调用资源 |
-| **AIOrchestrate** | AI编排多资源协同 |
-| **AIQuery** | AI查询资源信息 |
-| **AISuggest** | AI提供建议 |
-
----
-
-## 💻 多语言实现
-
-### Go版本（完整实现）
-
-**特点：**
-- 简洁高效，低内存占用
-- Goroutine并发模型
-- 适合微服务和云原生
-
-**使用：**
-```go
-// 创建系统
-rosix := syscall.NewSystem(actorManager, thingService, behaviorService)
-
-// 创建上下文
-ctx, _ := rosix.CreateContext("user_001", "session_123", nil)
-defer rosix.DestroyContext(ctx)
-
-// 查找资源
-resources, _ := rosix.Find(core.Query{
-    Type:     core.TypeActor,
-    Category: "purifier",
-    Limit:    5,
-})
-
-// 打开资源
-rd, _ := rosix.Open(resources[0].Path(), core.ModeInvoke, ctx)
-defer rosix.Close(rd)
-
-// 调用行为
-result, _ := rosix.Invoke(rd, "purify_air", map[string]interface{}{
-    "mode":      "auto",
-    "intensity": 3,
-})
-```
-
-### Java版本（核心实现）
-
-**特点：**
-- 企业级支持，丰富生态
-- Spring Boot框架
-- 适合大型应用
-
-**使用：**
-```java
-// 创建系统
-ROSIX rosix = new ROSIXSystem();
-
-// 创建上下文
-Context ctx = rosix.createContext("user_001", "session_123", null);
-
-try {
-    // 查找资源
-    List<Resource> resources = rosix.find(Query.builder()
-        .type(ResourceType.ACTOR)
-        .category("purifier")
-        .limit(5)
-        .build());
-    
-    // 打开资源
-    ResourceDescriptor rd = rosix.open(
-        resources.get(0).getPath(),
-        OpenMode.combine(OpenMode.INVOKE),
-        ctx
-    );
-    
-    try {
-        // 调用行为
-        Map<String, Object> result = rosix.invoke(rd, "purify_air",
-            Map.of("mode", "auto", "intensity", 3));
-    } finally {
-        rosix.close(rd);
-    }
-} finally {
-    rosix.destroyContext(ctx);
-}
-```
-
----
-
-## 🎯 设计细节对照
-
-### 1. 资源描述符机制
-
-**POSIX文件描述符：**
-```c
-// 内核维护fd表
-struct process {
-    struct file *fd_array[MAX_FD];  // fd -> file对象
-}
-
-int fd = open("/dev/sda", O_RDWR);  // fd = 3
-// 内核: fd_array[3] = file_object
-```
-
-**ROSIX资源描述符：**
-```go
-// 系统维护RD映射
-type System struct {
-    nextRD  int64
-    handles map[ResourceDescriptor]*ResourceHandle
-}
-
-rd := rosix.Open(path, mode, ctx)  // rd = 1001
-// 系统: handles[1001] = ResourceHandle{Resource, Mode, Context}
-```
-
-### 2. 打开模式位标志
-
-**POSIX：**
-```c
-#define O_RDONLY  0x0000
-#define O_WRONLY  0x0001
-#define O_RDWR    0x0002
-#define O_NONBLOCK 0x0004
-
-fd = open(path, O_RDWR | O_NONBLOCK);  // 位运算组合
-```
-
-**ROSIX：**
-```go
-const (
-    ModeRead   OpenMode = 1 << iota  // 0x01
-    ModeWrite                         // 0x02
-    ModeInvoke                        // 0x04
-    ModeWatch                         // 0x08
-)
-
-rd := rosix.Open(path, ModeRead|ModeInvoke, ctx)  // 位运算组合
-```
-
-### 3. 层次化路径
-
-**POSIX：**
-```
-/dev/sda1              # 块设备
-/proc/123/status       # 进程信息
-/sys/class/net/eth0    # 网络设备
-```
-
-**ROSIX：**
-```
-/actors/{id}                    # Actor资源
-/things/purifier/{id}           # Thing资源
-/devices/sensor/temp_001        # 设备资源
-/objects/container/box_001      # 对象资源
-```
-
-### 4. 错误处理
-
-**POSIX：**
-```c
-fd = open(path, flags);
-if (fd < 0) {
-    switch (errno) {
-        case ENOENT:  // 文件不存在
-        case EACCES:  // 权限拒绝
-        case EBUSY:   // 资源繁忙
-    }
-}
-```
-
-**ROSIX：**
-```go
-// Go版本
-rd, err := rosix.Open(path, mode, ctx)
-if err != nil {
-    switch err.(*core.Error).Code {
-        case ErrNotFound:         // 404
-        case ErrPermissionDenied: // 403
-        case ErrResourceBusy:     // 409
-    }
-}
-
-// Java版本
-try {
-    rd = rosix.open(path, mode, ctx);
-} catch (ResourceException e) {
-    switch (e.getCode()) {
-        case NOT_FOUND:
-        case PERMISSION_DENIED:
-        case RESOURCE_BUSY:
-    }
-}
-```
-
----
-
-## 🌟 ROSIX的创新点
-
-虽然借鉴POSIX，但ROSIX有自己的特色：
-
-### 1. 区分静态属性和动态特征
-
-```go
-// POSIX: 只有文件内容
-read(fd, buffer, size);
-
-// ROSIX: 区分静态和动态
-resource.Attributes()  // 静态：ID、名称、类型（不变）
-resource.Features()    // 动态：温度、速度、状态（变化）
-```
-
-### 2. 行为是一等公民
+### 4.2 基本接口定义
 
 ```c
-// POSIX: 通用控制接口
-ioctl(fd, IOCTL_GET_SPEED, &speed);
-```
+// 创建或解析资源引用
+ResourceHandle rosix_open(const char* uri, const char* mode);
+ROSIX_Result   rosix_close(ResourceHandle handle);
 
-```go
-// ROSIX: 每个行为都有名字和完整定义
-rosix.Invoke(rd, "purify_air", map[string]interface{}{
-    "mode":      "auto",      // 参数有类型和验证
-    "intensity": 3,
-    "target_pm25": 35,
-})
-```
+// 资源数据访问
+ROSIX_Result rosix_read(ResourceHandle handle, void* buffer, size_t size);
+ROSIX_Result rosix_write(ResourceHandle handle, const void* data, size_t size);
 
-### 3. 原生AI支持
+// 属性与控制
+ROSIX_Result rosix_getattr(ResourceHandle handle, const char* key, char* value, size_t len);
+ROSIX_Result rosix_setattr(ResourceHandle handle, const char* key, const char* value);
+ROSIX_Result rosix_invoke(ResourceHandle handle, const char* action, const char* args);
 
-```go
-// POSIX没有这个概念
+// 事件监听
+ROSIX_Result rosix_subscribe(ResourceHandle handle, const char* event, ROSIX_Callback cb, void* userdata);
+ROSIX_Result rosix_unsubscribe(ResourceHandle handle, const char* event);
 
-// ROSIX内置AI编排
-orchestrator.Invoke("打开空气净化器", ctx)
-orchestrator.Orchestrate("进入睡眠模式", ctx)
-orchestrator.Query("客厅的温度是多少？", ctx)
-```
-
-### 4. 资源关系管理
-
-```go
-// POSIX: 文件间没有显式关系
-
-// ROSIX: 资源间可以建立关系
-rosix.Link(sensor, controller, "monitors", metadata)
-relations := rosix.GetRelations(rd)
-```
-
-### 5. 上下文机制
-
-```go
-// POSIX: 进程上下文（隐式）
-// 每个进程有uid/gid/cwd等
-
-// ROSIX: 显式上下文（每个操作都传递）
-type Context struct {
-    UserID    string              // 用户标识
-    SessionID string              // 会话标识
-    Metadata  map[string]interface{}
-    Deadline  time.Time           // 超时控制
-    Cancel    chan struct{}       // 取消信号
-}
+// 关系管理
+ROSIX_Result rosix_link(ResourceHandle parent, ResourceHandle child);
+ROSIX_Result rosix_unlink(ResourceHandle parent, ResourceHandle child);
 ```
 
 ---
 
-## 🚀 快速开始
+## 5. ROSIX.ResourceSpace
 
-### Go版本
+ResourceSpace 是 ROSIX 的语义核心层。
+它维护了**资源的时空状态、语义关系与拓扑结构**，相当于“信息空间中的数字孪生宇宙”。
 
-```bash
-# 查看示例
-cd rosix/golang/examples
-cat basic_usage.go
+### 5.1 主要概念
 
-# 集成到系统
-# 参考 rosix/INTEGRATION.md
+* **ResourceRef**：资源在信息空间的唯一引用。
+* **SpatialContext**：空间位置、拓扑邻接关系。
+* **TemporalContext**：状态的时间演化历史与预测轨迹。
+* **SemanticProfile**：资源的类型、属性、能力描述。
+
+### 5.2 接口定义
+
+```c
+typedef struct {
+    double x, y, z;
+    double orientation[3];
+} SpatialContext;
+
+typedef struct {
+    time_t timestamp;
+    char* state;
+    char* trend;    // e.g., "increasing", "stable", "decreasing"
+} TemporalContext;
+
+typedef struct {
+    char* type;
+    char* capabilities;
+    char* ontology_uri;
+} SemanticProfile;
+
+typedef struct {
+    ResourceHandle handle;
+    SpatialContext space;
+    TemporalContext time;
+    SemanticProfile semantic;
+} ResourceRef;
+
+// 资源解析与上下文管理
+ResourceRef rosix_resolve(const char* uri);
+ROSIX_Result rosix_update_spatial(ResourceHandle handle, SpatialContext ctx);
+ROSIX_Result rosix_update_temporal(ResourceHandle handle, TemporalContext ctx);
+ROSIX_Result rosix_query_topology(ResourceHandle handle, ResourceRef* neighbors, size_t max);
 ```
 
-### Java版本
+### 5.3 时空维度维护
 
-```bash
-# 进入Java目录
-cd rosix/java
+ResourceSpace 提供时间序列存储与版本追踪机制：
 
-# 编译项目
-mvn clean compile
-
-# 运行示例
-mvn exec:java -Dexec.mainClass="com.uros.rosix.example.RealWorldExample"
-```
-
-### 实际调用示例
-
-```bash
-# 通过HTTP API调用（Go服务器运行中）
-curl -X POST http://localhost:8080/api/v1/actors/{actorId}/functions/purify_air \
-  -H "Content-Type: application/json" \
-  -d '{"mode":"auto","intensity":3}'
-```
+* 每个资源状态在 `TemporalContext` 中记录时间戳与趋势；
+* 支持快照（snapshot）与回溯（replay）；
+* 可与流式层结合形成持续计算语义。
 
 ---
 
-## 📖 完整示例
+## 6. ROSIX.Stream
 
-### 场景：控制空气净化器
+流式接口用于实时数据处理与资源事件驱动的计算。
 
-**Go版本：**
-```go
-package main
+```c
+typedef struct {
+    ResourceHandle source;
+    void (*process)(const void* data, size_t size, void* context);
+} ROSIX_Stream;
 
-import (
-    "log"
-    "uros-restron/rosix/core"
-    "uros-restron/rosix/syscall"
-)
-
-func main() {
-    // 创建系统
-    rosix := syscall.NewSystem(actorManager, thingService, behaviorService)
-    
-    // 创建上下文
-    ctx, _ := rosix.CreateContext("user_001", "session_123", nil)
-    defer rosix.DestroyContext(ctx)
-    
-    // 查找净化器
-    resources, _ := rosix.Find(core.Query{
-        Type:     core.TypeActor,
-        Category: "purifier",
-        Limit:    1,
-    })
-    
-    // 打开资源
-    rd, _ := rosix.Open(resources[0].Path(), core.ModeInvoke, ctx)
-    defer rosix.Close(rd)
-    
-    // 调用净化功能
-    result, _ := rosix.Invoke(rd, "purify_air", map[string]interface{}{
-        "mode":      "auto",
-        "intensity": 3,
-    })
-    
-    log.Printf("净化器已启动: %v", result)
-}
+ROSIX_Result rosix_stream_open(ResourceHandle source, ROSIX_Stream* stream);
+ROSIX_Result rosix_stream_subscribe(ROSIX_Stream* stream, ROSIX_Callback cb);
+ROSIX_Result rosix_stream_close(ROSIX_Stream* stream);
 ```
 
-**Java版本：**
-```java
-import com.uros.rosix.core.*;
-import com.uros.rosix.syscall.ROSIXSystem;
+支持：
 
-public class PurifierControl {
-    public static void main(String[] args) throws Exception {
-        // 创建系统
-        ROSIX rosix = new ROSIXSystem();
-        
-        // 创建上下文
-        Context ctx = rosix.createContext("user_001", "session_123", null);
-        
-        try {
-            // 查找净化器
-            var resources = rosix.find(Query.builder()
-                .type(ResourceType.ACTOR)
-                .category("purifier")
-                .limit(1)
-                .build());
-            
-            // 打开资源
-            ResourceDescriptor rd = rosix.open(
-                resources.get(0).getPath(),
-                OpenMode.INVOKE.getValue(),
-                ctx
-            );
-            
-            try {
-                // 调用净化功能
-                var result = rosix.invoke(rd, "purify_air",
-                    Map.of("mode", "auto", "intensity", 3));
-                
-                System.out.println("净化器已启动: " + result);
-            } finally {
-                rosix.close(rd);
-            }
-        } finally {
-            rosix.destroyContext(ctx);
-        }
-    }
-}
+* 持续感知与响应；
+* 异步数据流；
+* 事件触发型任务。
+
+---
+
+## 7. ROSIX.Rule
+
+基于规则与逻辑的编程模型，用于描述资源间的条件触发与逻辑约束。
+
+```c
+typedef struct {
+    char* condition;   // e.g., "temperature > 28"
+    char* action;      // e.g., "fan = ON"
+} ROSIX_Rule;
+
+ROSIX_Result rosix_rule_define(const char* name, ROSIX_Rule* rules, size_t count);
+ROSIX_Result rosix_rule_enable(const char* name);
+ROSIX_Result rosix_rule_disable(const char* name);
 ```
 
 ---
 
-## 🎨 使用场景
+## 8. ROSIX.Workflow
 
-### 1. 应用开发
-通过ROSIX接口开发资源管理应用，无需关心底层Thing/Actor/Behavior的实现细节。
+用于复杂场景中多资源、多阶段协同的编排。
 
-### 2. 资源编排
-统一接口编排多个资源协同工作，实现复杂业务逻辑。
+```c
+typedef struct {
+    char* task_name;
+    char* dependencies[8];
+    ROSIX_Result (*execute)(void* context);
+} ROSIX_Task;
 
-### 3. AI驱动管理
-通过自然语言或AI模型驱动资源的智能管理和协同。
-
-### 4. 系统集成
-为第三方系统提供标准化的资源访问接口。
-
-### 5. 跨语言互操作
-Go服务器 + Java/Python/JavaScript客户端，完全互通。
-
----
-
-## 📊 统计数据
-
-- **Go代码**: ~2,559行
-- **Java代码**: ~1,500行
-- **文档**: ~2,500行
-- **总计**: ~6,500行代码和文档
-- **文件数**: 30+
-
----
-
-## 🎯 设计目标
-
-1. **简洁性** - 类似POSIX，只有少量核心原语
-2. **一致性** - 所有资源使用统一接口
-3. **可扩展性** - 易于添加新资源类型
-4. **可组合性** - 支持资源的灵活组合
-5. **智能化** - AI原生支持
-
----
-
-## 📚 文档索引
-
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - 详细架构设计，包含数据流和组件说明
-- **[INTEGRATION.md](INTEGRATION.md)** - 如何集成到现有系统
-- **[QUICKSTART.md](QUICKSTART.md)** - 30秒快速体验
-- **[SUMMARY.md](SUMMARY.md)** - 项目总结和统计
-- **[LANGUAGE_COMPARISON.md](LANGUAGE_COMPARISON.md)** - Go vs Java对比
-- **[golang/examples/](golang/examples/)** - Go示例代码
-- **[java/examples/](java/examples/)** - Java示例代码
-
----
-
-## 🔮 设计哲学总结
-
-```
-POSIX教给我们：
-  ✓ 统一抽象的力量 - "一切皆文件"
-  ✓ 简单原语的威力 - open/close/read/write
-  ✓ 接口的稳定性 - 50年不变的API
-  ✓ 组合优于继承 - 小工具+管道
-
-ROSIX的演绎：
-  ✓ 扩展抽象理念 - "一切皆资源"
-  ✓ 增强操作语义 - Read/Write/Invoke
-  ✓ 添加现代特性 - AI、事件、关系
-  ✓ 保持简洁优雅 - 少即是多
+ROSIX_Result rosix_workflow_create(const char* name);
+ROSIX_Result rosix_workflow_add_task(const char* name, ROSIX_Task task);
+ROSIX_Result rosix_workflow_start(const char* name);
 ```
 
-**ROSIX = POSIX理念 + 资源管理 + AI驱动 + 现代化**
+---
+
+## 9. ROSIX.AI
+
+AI 层使得资源操作具备意图驱动与语义理解能力。
+它允许开发者通过自然语言、知识图谱或模型代理与系统交互。
+
+```c
+typedef struct {
+    char* model_uri;
+    char* prompt;
+    char* output;
+} ROSIX_Agent;
+
+ROSIX_Result rosix_agent_invoke(ROSIX_Agent* agent, const char* intent);
+ROSIX_Result rosix_agent_bind(ResourceHandle handle, ROSIX_Agent* agent);
+ROSIX_Result rosix_agent_unbind(ResourceHandle handle);
+```
+
+该层面为“AI 原生的人机物协同”提供统一接口，使智能体可以：
+
+* 理解资源状态；
+* 生成控制意图；
+* 动态优化任务编排。
 
 ---
 
-## ✨ 核心价值
+## 10. 安全与一致性
 
-### 对开发者
-- 熟悉的编程模型（类POSIX）
-- 统一的操作接口
-- 降低学习曲线
+* 所有资源访问受统一权限模型（AccessToken）保护；
+* 支持多级隔离域（Domain）与命名空间（Namespace）；
+* 提供一致性保障机制：
 
-### 对系统
-- 标准化的资源管理
-- 易于扩展和维护
-- 跨语言互操作
-
-### 对未来
-- AI原生设计
-- 适应智能化趋势
-- 面向资源网络的编程模型
+  * 强一致（Strong Consistency）用于关键控制；
+  * 最终一致（Eventual Consistency）用于流式协作。
 
 ---
 
-**ROSIX - 让资源管理像操作文件一样简单！** 🚀
+## 11. 附录：API 摘要
 
+| 模块            | 代表接口                                                         |
+| ------------- | ------------------------------------------------------------ |
+| ROSIX.Core    | rosix_open / rosix_read / rosix_invoke / rosix_subscribe     |
+| ResourceSpace | rosix_resolve / rosix_update_spatial / rosix_update_temporal |
+| Stream        | rosix_stream_open / rosix_stream_subscribe                   |
+| Rule          | rosix_rule_define / rosix_rule_enable                        |
+| Workflow      | rosix_workflow_create / rosix_workflow_add_task              |
+| AI            | rosix_agent_invoke / rosix_agent_bind                        |
+
+---
+
+## 结语
+
+ROSIX 标准旨在通过统一的资源抽象层、标准化的编程接口和 AI 驱动的智能编排模型，
+实现一个“面向现实世界的操作系统接口”，为未来的人机物协同生态奠定基础。
